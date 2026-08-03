@@ -1,20 +1,12 @@
-/**
- * ============================================================
- * auth.js - AIMTRICK Authentication Core
- * Bản quyền thuộc VTĐZAI - Không sao chép dưới mọi hình thức
- * Version: 3.2.3
- * ============================================================
- */
-
+/* auth.js - Core Authentication */
 (function() {
     'use strict';
 
     // ============================================================
-    // CẤU HÌNH HỆ THỐNG
+    // CẤU HÌNH
     // ============================================================
     const CONFIG = {
-        STORAGE_KEY: 'aimtrick_activation',
-        DEVICE_KEY: 'aimtrick_device_id',
+        STORAGE_KEY: 'aimtrick_auth',
         DEMO_MODE: true,
         KEY_TYPES: {
             '24H': { label: '24 giờ', deviceLimit: Infinity, expiryHours: 24 },
@@ -24,113 +16,81 @@
     };
 
     // ============================================================
-    // TRẠNG THÁI
+    // STORAGE WRAPPER (XỬ LÝ LỖI)
     // ============================================================
-    const state = {
-        isActivated: false,
-        currentKey: null,
-        keyType: null,
-        deviceCount: 0,
-        deviceLimit: 0,
-        expiryDate: null,
-        deviceId: null
-    };
-
-    // ============================================================
-    // UTILITY
-    // ============================================================
-    const Utils = {
-        generateDeviceId: function() {
-            const timestamp = Date.now().toString(36);
-            const random = Math.random().toString(36).substr(2, 8);
-            const nav = navigator.userAgent.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
-            return 'DEV-' + timestamp + '-' + random + '-' + nav;
-        },
-
-        getDeviceId: function() {
-            let id = localStorage.getItem(CONFIG.DEVICE_KEY);
-            if (!id) {
-                id = this.generateDeviceId();
-                localStorage.setItem(CONFIG.DEVICE_KEY, id);
+    const Storage = {
+        get: function(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
             }
-            return id;
         },
-
-        formatDate: function(timestamp) {
-            if (!timestamp) return '---';
-            if (timestamp === Infinity) return 'Vĩnh viễn';
-            const date = new Date(timestamp);
-            return date.toLocaleDateString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        },
-
-        isValidKeyFormat: function(key) {
-            const clean = key.trim().toUpperCase();
-            if (/^24H-[A-Z0-9]{4,}$/.test(clean)) return { valid: true, type: '24H' };
-            if (/^7D-[A-Z0-9]{4,}$/.test(clean)) return { valid: true, type: '7D' };
-            if (/^VV-[A-Z0-9]{4,}$/.test(clean)) return { valid: true, type: 'VV' };
-            return { valid: false };
-        }
-    };
-
-    // ============================================================
-    // DATABASE
-    // ============================================================
-    const DB = {
-        get: function() {
+        set: function(key, data) {
             try {
-                const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
-                if (raw) return JSON.parse(raw);
-            } catch (e) {}
-            return null;
-        },
-
-        save: function(data) {
-            try {
-                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data));
+                localStorage.setItem(key, JSON.stringify(data));
                 return true;
             } catch (e) {
                 return false;
             }
         },
-
-        getDevices: function(key) {
-            const data = this.get();
-            if (data && data[key]) {
-                return data[key].devices || [];
+        getSession: function(key) {
+            try {
+                const raw = sessionStorage.getItem(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
             }
-            return [];
         },
-
-        addDevice: function(key, deviceId) {
-            const data = this.get() || {};
-            if (!data[key]) {
-                data[key] = { devices: [] };
-            }
-            if (!data[key].devices.includes(deviceId)) {
-                data[key].devices.push(deviceId);
-                this.save(data);
+        setSession: function(key, data) {
+            try {
+                sessionStorage.setItem(key, JSON.stringify(data));
                 return true;
+            } catch (e) {
+                return false;
             }
-            return false;
         },
-
-        isDeviceActivated: function(key, deviceId) {
-            const devices = this.getDevices(key);
-            return devices.includes(deviceId);
+        remove: function(key) {
+            try {
+                localStorage.removeItem(key);
+                return true;
+            } catch (e) {
+                return false;
+            }
         },
+        removeSession: function(key) {
+            try {
+                sessionStorage.removeItem(key);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+    };
 
-        getDeviceCount: function(key) {
-            return this.getDevices(key).length;
-        },
-
-        clear: function() {
-            localStorage.removeItem(CONFIG.STORAGE_KEY);
+    // ============================================================
+    // DEVICE ID (ỔN ĐỊNH)
+    // ============================================================
+    const DeviceId = {
+        _id: null,
+        get: function() {
+            if (this._id) return this._id;
+            
+            let id = Storage.get('aimtrick_device');
+            if (id && typeof id === 'string' && id.startsWith('DEV-')) {
+                this._id = id;
+                return id;
+            }
+            
+            const timestamp = Date.now().toString(36);
+            const random = Math.random().toString(36).substr(2, 8);
+            const nav = navigator.userAgent.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '').substring(0, 10);
+            id = 'DEV-' + timestamp + '-' + random + '-' + nav;
+            
+            Storage.set('aimtrick_device', id);
+            this._id = id;
+            return id;
         }
     };
 
@@ -138,22 +98,30 @@
     // VALIDATOR
     // ============================================================
     const Validator = {
+        isValidFormat: function(key) {
+            const clean = key.trim().toUpperCase();
+            if (/^24H-[A-Z0-9]{4,}$/.test(clean)) return { valid: true, type: '24H' };
+            if (/^7D-[A-Z0-9]{4,}$/.test(clean)) return { valid: true, type: '7D' };
+            if (/^VV-[A-Z0-9]{4,}$/.test(clean)) return { valid: true, type: 'VV' };
+            return { valid: false };
+        },
+
         validate: function(key) {
             const cleanKey = key.trim().toUpperCase();
             if (!cleanKey) {
                 return { valid: false, reason: 'Vui lòng nhập mã kích hoạt' };
             }
 
-            const formatCheck = Utils.isValidKeyFormat(cleanKey);
+            const formatCheck = this.isValidFormat(cleanKey);
             if (!formatCheck.valid) {
                 return { valid: false, reason: 'Mã kích hoạt không đúng định dạng' };
             }
 
-            if (CONFIG.DEMO_MODE) {
-                return this.validateLocal(cleanKey, formatCheck.type);
+            if (!CONFIG.DEMO_MODE) {
+                return { valid: false, reason: 'Hệ thống đang trong chế độ bảo trì' };
             }
 
-            return { valid: false, reason: 'Server chưa được cấu hình' };
+            return this.validateLocal(cleanKey, formatCheck.type);
         },
 
         validateLocal: function(key, type) {
@@ -162,11 +130,13 @@
                 return { valid: false, reason: 'Loại key không hợp lệ' };
             }
 
+            // Blacklist
             const blacklist = ['24H-DEMO-EXPIRED', '7D-DEMO-BLOCKED'];
             if (blacklist.includes(key)) {
                 return { valid: false, reason: 'Key đã bị khóa' };
             }
 
+            // Tính thời gian hết hạn
             let expiryTimestamp = Infinity;
             if (typeInfo.expiryHours) {
                 expiryTimestamp = Date.now() + (typeInfo.expiryHours * 60 * 60 * 1000);
@@ -174,12 +144,15 @@
                 expiryTimestamp = Date.now() + (typeInfo.expiryDays * 24 * 60 * 60 * 1000);
             }
 
-            const deviceCount = DB.getDeviceCount(key);
-            if (deviceCount >= typeInfo.deviceLimit) {
+            // Kiểm tra giới hạn thiết bị
+            const data = Storage.get(CONFIG.STORAGE_KEY) || {};
+            const devices = data[key] && data[key].devices ? data[key].devices : [];
+            
+            if (devices.length >= typeInfo.deviceLimit) {
                 return {
                     valid: false,
                     reason: 'Đã đạt giới hạn ' + typeInfo.deviceLimit + ' thiết bị',
-                    deviceCount: deviceCount,
+                    deviceCount: devices.length,
                     deviceLimit: typeInfo.deviceLimit
                 };
             }
@@ -192,21 +165,29 @@
                     typeLabel: typeInfo.label,
                     deviceLimit: typeInfo.deviceLimit,
                     expiryTimestamp: expiryTimestamp,
-                    currentDevices: deviceCount
+                    currentDevices: devices.length
                 }
             };
         }
     };
 
     // ============================================================
-    // AUTH ENGINE (PUBLIC API)
+    // AUTH CORE
     // ============================================================
     const Auth = {
-        state: state,
+        state: {
+            isActivated: false,
+            currentKey: null,
+            keyType: null,
+            deviceCount: 0,
+            deviceLimit: 0,
+            expiryDate: null,
+            deviceId: null
+        },
 
         init: function() {
-            state.deviceId = Utils.getDeviceId();
-            this.restore();
+            this.state.deviceId = DeviceId.get();
+            this._restore();
             return this;
         },
 
@@ -216,15 +197,23 @@
                 return { success: false, reason: result.reason };
             }
 
-            const isActivated = DB.isDeviceActivated(result.key, state.deviceId);
-            if (isActivated) {
+            const deviceId = this.state.deviceId;
+            const data = Storage.get(CONFIG.STORAGE_KEY) || {};
+            
+            // Kiểm tra đã kích hoạt chưa
+            if (data[result.key] && data[result.key].devices && data[result.key].devices.includes(deviceId)) {
                 this._setState(result.key, result.keyData);
                 return { success: true, already: true, keyData: result.keyData };
             }
 
-            const added = DB.addDevice(result.key, state.deviceId);
-            if (!added) {
-                return { success: false, reason: 'Không thể kích hoạt thiết bị' };
+            // Thêm thiết bị mới
+            if (!data[result.key]) {
+                data[result.key] = { devices: [] };
+            }
+            data[result.key].devices.push(deviceId);
+            
+            if (!Storage.set(CONFIG.STORAGE_KEY, data)) {
+                return { success: false, reason: 'Không thể lưu dữ liệu kích hoạt' };
             }
 
             this._setState(result.key, result.keyData);
@@ -232,85 +221,96 @@
             return { success: true, already: false, keyData: result.keyData };
         },
 
-        restore: function() {
-            try {
-                const raw = sessionStorage.getItem('aimtrick_session');
-                if (!raw) return false;
-                const data = JSON.parse(raw);
-                if (!data.key || !data.keyData) return false;
-
-                const isActive = DB.isDeviceActivated(data.key, state.deviceId);
-                if (!isActive) {
-                    sessionStorage.removeItem('aimtrick_session');
+        isActivated: function() {
+            // Kiểm tra thời gian hết hạn
+            if (this.state.isActivated && this.state.expiryDate && this.state.expiryDate !== Infinity) {
+                if (Date.now() > this.state.expiryDate) {
+                    this.reset();
                     return false;
                 }
-
-                this._setState(data.key, data.keyData);
-                return true;
-            } catch (e) {
-                return false;
             }
-        },
-
-        reset: function() {
-            state.isActivated = false;
-            state.currentKey = null;
-            state.keyType = null;
-            state.deviceCount = 0;
-            state.deviceLimit = 0;
-            state.expiryDate = null;
-            sessionStorage.removeItem('aimtrick_session');
-        },
-
-        isActivated: function() {
-            return state.isActivated;
+            return this.state.isActivated;
         },
 
         getDeviceId: function() {
-            return state.deviceId;
+            return this.state.deviceId;
         },
 
         getKeyInfo: function() {
             return {
-                key: state.currentKey,
-                type: state.keyType,
-                deviceCount: state.deviceCount,
-                deviceLimit: state.deviceLimit,
-                expiryDate: state.expiryDate
+                key: this.state.currentKey,
+                type: this.state.keyType,
+                deviceCount: this.state.deviceCount,
+                deviceLimit: this.state.deviceLimit,
+                expiryDate: this.state.expiryDate
             };
         },
 
-        // Internal
-        _setState: function(key, keyData) {
-            const { typeLabel, deviceLimit, expiryTimestamp } = keyData;
-            const deviceCount = DB.getDeviceCount(key);
-
-            state.isActivated = true;
-            state.currentKey = key;
-            state.keyType = typeLabel;
-            state.deviceCount = deviceCount;
-            state.deviceLimit = deviceLimit;
-            state.expiryDate = expiryTimestamp;
+        reset: function() {
+            this.state.isActivated = false;
+            this.state.currentKey = null;
+            this.state.keyType = null;
+            this.state.deviceCount = 0;
+            this.state.deviceLimit = 0;
+            this.state.expiryDate = null;
+            Storage.removeSession('aimtrick_session');
         },
 
-        _saveSession: function(key, keyData) {
-            sessionStorage.setItem('aimtrick_session', JSON.stringify({
-                key: key,
-                keyData: keyData,
-                timestamp: Date.now()
-            }));
-        },
-
-        // Demo key generator
         generateDemoKey: function(type) {
             const validTypes = ['24H', '7D', 'VV'];
             if (!validTypes.includes(type)) {
                 throw new Error('Loại key không hợp lệ');
             }
-            const prefix = type;
             const random = Math.random().toString(36).substr(2, 8).toUpperCase();
             const hash = Math.abs(random.split('').reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0) & 0x7FFFFFFF).toString(36).substr(0, 4);
-            return prefix + '-' + random + '-' + hash.toUpperCase();
+            return type + '-' + random + '-' + hash.toUpperCase();
+        },
+
+        // Private
+        _setState: function(key, keyData) {
+            const { typeLabel, deviceLimit, expiryTimestamp } = keyData;
+            const data = Storage.get(CONFIG.STORAGE_KEY) || {};
+            const devices = data[key] && data[key].devices ? data[key].devices : [];
+
+            this.state.isActivated = true;
+            this.state.currentKey = key;
+            this.state.keyType = typeLabel;
+            this.state.deviceCount = devices.length;
+            this.state.deviceLimit = deviceLimit;
+            this.state.expiryDate = expiryTimestamp;
+        },
+
+        _saveSession: function(key, keyData) {
+            Storage.setSession('aimtrick_session', {
+                key: key,
+                keyData: keyData,
+                timestamp: Date.now()
+            });
+        },
+
+        _restore: function() {
+            const session = Storage.getSession('aimtrick_session');
+            if (!session || !session.key || !session.keyData) {
+                return false;
+            }
+
+            // Kiểm tra hết hạn
+            const expiry = session.keyData.expiryTimestamp;
+            if (expiry && expiry !== Infinity && Date.now() > expiry) {
+                Storage.removeSession('aimtrick_session');
+                return false;
+            }
+
+            // Kiểm tra thiết bị
+            const data = Storage.get(CONFIG.STORAGE_KEY) || {};
+            const devices = data[session.key] && data[session.key].devices ? data[session.key].devices : [];
+            if (!devices.includes(this.state.deviceId)) {
+                Storage.removeSession('aimtrick_session');
+                return false;
+            }
+
+            this._setState(session.key, session.keyData);
+            return true;
         }
     };
 
