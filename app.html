@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AIMTRICK - Tối ưu thiết bị</title>
+    <style>
+        /* ============================================================
+           style.css - AIMTRICK App UI
+           Tối ưu cho màn hình nhỏ (mobile first) + dark theme
+           ============================================================ */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #0a0f1e;
+            font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            color: #eef2f9;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            background: linear-gradient(145deg, #141b2b, #1a2338);
+            border-radius: 32px;
+            padding: 32px 24px 28px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: center;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: #1f2b42;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .logo svg {
+            width: 48px;
+            height: 48px;
+            fill: none;
+            stroke: #f5c842;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        h1 {
+            color: #f5c842;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(245, 200, 66, 0.15);
+            margin-bottom: 4px;
+        }
+
+        .sub {
+            color: #8a9bb5;
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(245, 200, 66, 0.08);
+            color: #f5c842;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 40px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(245, 200, 66, 0.1);
+        }
+
+        /* ===== NÚT TỐI ƯU CHÍNH ===== */
+        .optimize-btn {
+            background: linear-gradient(135deg, #f5c842, #e6b830);
+            border: none;
+            border-radius: 20px;
+            color: #0a0f1e;
+            font-weight: 800;
+            font-size: 22px;
+            padding: 22px 20px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 32px rgba(245, 200, 66, 0.3);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .optimize-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .optimize-btn:active::after {
+            opacity: 1;
+        }
+
+        .optimize-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 4px 16px rgba(245, 200, 66, 0.25);
+        }
+
+        .optimize-btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.5);
+            transform: none;
+        }
+
+        .optimize-btn .icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        /* ===== TRẠNG THÁI ===== */
+        .status {
+            min-height: 28px;
+            margin: 18px 0 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+
+        .status .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #2a3650;
+            border-top-color: #f5c842;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status.success { color: #5fdc7a; }
+        .status.error { color: #f86a6a; }
+        .status.info { color: #7a9cdc; }
+        .status.warning { color: #f5b342; }
+
+        /* ===== THÔNG SỐ THIẾT BỊ ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .info-item {
+            background: #0d1322;
+            border-radius: 12px;
+            padding: 12px 4px;
+        }
+
+        .info-item .label {
+            color: #5e7290;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .info-item .value {
+            color: #eef2f9;
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .info-item .value.gold {
+            color: #f5c842;
+        }
+        .info-item .value.green {
+            color: #5fdc7a;
+        }
+        .info-item .value.blue {
+            color: #7a9cdc;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            margin-top: 24px;
+            color: #3d4b66;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 18px;
+        }
+
+        .footer span {
+            color: #f5c842;
+            font-weight: 600;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px 16px 20px;
+                border-radius: 24px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .optimize-btn {
+                font-size: 18px;
+                padding: 18px 16px;
+                border-radius: 16px;
+            }
+            .optimize-btn .icon {
+                font-size: 24px;
+            }
+            .info-grid {
+                gap: 8px;
+                padding-top: 16px;
+                margin-top: 18px;
+            }
+            .info-item .value {
+                font-size: 14px;
+            }
+            .status {
+                font-size: 13px;
+                min-height: 24px;
+                margin: 14px 0 16px;
+            }
+            .logo {
+                width: 68px;
+                height: 68px;
+                border-radius: 20px;
+            }
+            .logo svg {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .container {
+                padding: 18px 12px 16px;
+                border-radius: 20px;
+            }
+            h1 {
+                font-size: 18px;
+            }
+            .optimize-btn {
+                font-size: 16px;
+                padding: 16px 12px;
+                border-radius: 14px;
+            }
+            .optimize-btn .icon {
+                font-size: 20px;
+            }
+            .info-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .info-item:last-child {
+                grid-column: span 2;
+            }
+            .info-item .value {
+                font-size: 13px;
+            }
+            .status {
+                font-size: 12px;
+            }
+            .footer {
+                font-size: 10px;
+                padding-top: 14px;
+                margin-top: 18px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 40px 36px 34px;
+                max-width: 480px;
+            }
+            h1 {
+                font-size: 30px;
+            }
+            .optimize-btn {
+                font-size: 26px;
+                padding: 26px 24px;
+                border-radius: 24px;
+            }
+            .optimize-btn .icon {
+                font-size: 32px;
+            }
+            .logo {
+                width: 92px;
+                height: 92px;
+                border-radius: 28px;
+            }
+            .logo svg {
+                width: 54px;
+                height: 54px;
+            }
+            .info-item .value {
+                font-size: 18px;
+            }
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1322;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3650;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3d4b66;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo -->
+        <div class="logo">
+            <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M16 28 L22 22 L28 28 L34 22" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <circle cx="24" cy="16" r="2" fill="#f5c842"/>
+                <path d="M12 32 L18 26 L24 32 L30 26 L36 32" stroke="currentColor" stroke-width="1.8" fill="none" opacity="0.6"/>
+            </svg>
+        </div>
+
+        <h1>AIMTRICK</h1>
+        <div class="sub">TỐI ƯU THIẾT BỊ <span class="badge">v3.2</span></div>
+
+        <!-- Nút tối ưu -->
+        <button class="optimize-btn" id="optimizeBtn">
+            <span class="icon">⚡</span>
+            TỐI ƯU NGAY
+        </button>
+
+        <!-- Trạng thái -->
+        <div id="statusMessage" class="status info">
+            <span>◆</span> Sẵn sàng tối ưu
+        </div>
+
+        <!-- Thông số thiết bị -->
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="label">CPU</div>
+                <div class="value gold" id="cpuInfo">---</div>
+            </div>
+            <div class="info-item">
+                <div class="label">RAM</div>
+                <div class="value green" id="ramInfo">---</div>
+            </div>
+            <div class="info-item">
+                <div class="label">TRẠNG THÁI</div>
+                <div class="value blue" id="statusInfo">Chờ</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span>VTĐZAI</span> • Bảo hành dài hạn • Hỗ trợ 24/7
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================================
+         * app.js - AIMTRICK Tối ưu thiết bị
+         * Bản quyền thuộc VTĐZAI - Không sao chép dưới mọi hình thức
+         * Version: 3.2.2
+         * ============================================================
+         */
+        (function() {
+            'use strict';
+
+            // DOM refs
+            const optimizeBtn = document.getElementById('optimizeBtn');
+            const statusDiv = document.getElementById('statusMessage');
+            const cpuInfo = document.getElementById('cpuInfo');
+            const ramInfo = document.getElementById('ramInfo');
+            const statusInfo = document.getElementById('statusInfo');
+
+            // Trạng thái xử lý
+            let isProcessing = false;
+
+            // ============================================================
+            // HÀM LẤY THÔNG TIN THIẾT BỊ (mô phỏng)
+            // ============================================================
+            function getDeviceInfo() {
+                // CPU: lấy số lõi logic (nếu có)
+                let cpuCores = navigator.hardwareConcurrency || 4;
+                // RAM: ước lượng từ deviceMemory (nếu có) hoặc random trong khoảng 2-16GB
+                let ramGB = 4;
+                if (navigator.deviceMemory) {
+                    ramGB = navigator.deviceMemory;
+                } else {
+                    // random thực tế hơn: 4, 6, 8, 12, 16
+                    const options = [4, 6, 8, 12, 16];
+                    ramGB = options[Math.floor(Math.random() * options.length)];
+                }
+                return {
+                    cores: cpuCores,
+                    ram: ramGB
+                };
+            }
+
+            // ============================================================
+            // HÀM TỐI ƯU (mô phỏng)
+            // ============================================================
+            function performOptimization() {
+                if (isProcessing) return;
+                isProcessing = true;
+                optimizeBtn.disabled = true;
+
+                // Cập nhật UI
+                statusDiv.className = 'status info';
+                statusDiv.innerHTML = '<span class="spinner"></span> Đang tối ưu...';
+                statusInfo.textContent = 'Đang xử lý';
+                statusInfo.className = 'value blue';
+
+                // Lấy thông tin thiết bị
+                const info = getDeviceInfo();
+                cpuInfo.textContent = info.cores + ' nhân';
+                ramInfo.textContent = info.ram + ' GB';
+
+                // Mô phỏng quá trình tối ưu (chạy các tác vụ nền)
+                const steps = [
+                    { progress: 20, msg: 'Đang dọn dẹp bộ nhớ cache...' },
+                    { progress: 45, msg: 'Đang tối ưu luồng xử lý...' },
+                    { progress: 70, msg: 'Đang cân bằng tài nguyên...' },
+                    { progress: 90, msg: 'Đang áp dụng cấu hình tối ưu...' }
+                ];
+
+                let stepIndex = 0;
+
+                function runStep() {
+                    if (stepIndex >= steps.length) {
+                        // Hoàn thành
+                        statusDiv.className = 'status success';
+                        statusDiv.innerHTML = '✔ Tối ưu thành công! Thiết bị đã đạt hiệu suất tối đa.';
+                        statusInfo.textContent = 'Đã tối ưu';
+                        statusInfo.className = 'value green';
+                        optimizeBtn.disabled = false;
+                        isProcessing = false;
+                        return;
+                    }
+
+                    const step = steps[stepIndex];
+                    statusDiv.innerHTML = '<span class="spinner"></span> ' + step.msg;
+                    statusInfo.textContent = step.progress + '%';
+                    stepIndex++;
+
+                    // Tăng tốc CPU ảo (hiển thị)
+                    const extraCores = Math.floor(Math.random() * 2) + 1;
+                    cpuInfo.textContent = (info.cores + extraCores) + ' nhân';
+
+                    setTimeout(runStep, 600 + Math.random() * 400);
+                }
+
+                // Bắt đầu chạy các bước
+                setTimeout(runStep, 400);
+            }
+
+            // ============================================================
+            // KIỂM TRA KÍCH HOẠT (từ script.js, nếu có AIMTRICK API)
+            // ============================================================
+            function checkActivation() {
+                if (window.AIMTRICK && typeof window.AIMTRICK.isActivated === 'function') {
+                    if (!window.AIMTRICK.isActivated()) {
+                        // Chưa kích hoạt -> chuyển về index.html
+                        statusDiv.className = 'status error';
+                        statusDiv.innerHTML = '✖ Chưa kích hoạt bản quyền. Chuyển về trang kích hoạt...';
+                        setTimeout(function() {
+                            location.replace('index.html');
+                        }, 1200);
+                        return false;
+                    }
+                    // Đã kích hoạt, hiển thị thông tin key
+                    const keyInfo = window.AIMTRICK.getKeyInfo ? window.AIMTRICK.getKeyInfo() : null;
+                    if (keyInfo) {
+                        statusInfo.textContent = 'Đã kích hoạt';
+                        statusInfo.className = 'value green';
+                        cpuInfo.textContent = keyInfo.type || '---';
+                    }
+                    return true;
+                } else {
+                    // Không có AIMTRICK API (chạy standalone) -> vẫn cho phép dùng
+                    console.warn('AIMTRICK API not found, running in standalone mode.');
+                    return true;
+                }
+            }
+
+            // ============================================================
+            // KHỞI TẠO
+            // ============================================================
+            function init() {
+                // Kiểm tra kích hoạt
+                const activated = checkActivation();
+
+                // Nếu chưa kích hoạt, không cho bấm nút
+                if (!activated) {
+                    optimizeBtn.disabled = true;
+                    return;
+                }
+
+                // Hiển thị thông tin thiết bị ban đầu
+                const info = getDeviceInfo();
+                cpuInfo.textContent = info.cores + ' nhân';
+                ramInfo.textContent = info.ram + ' GB';
+                statusInfo.textContent = 'Sẵn sàng';
+                statusInfo.className = 'value blue';
+
+                // Gán sự kiện cho nút
+                optimizeBtn.addEventListener('click', performOptimization);
+
+                console.log('AIMTRICK App v3.2.2 - Tối ưu thiết bị sẵn sàng.');
+            }
+
+            // ============================================================
+            // KHỞI CHẠY KHI DOM SẴN SÀNG
+            // ============================================================
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+            // ============================================================
+            // EXPOSE (tuỳ chọn)
+            // ============================================================
+            window.AIMTRICK_APP = {
+                version: '3.2.2',
+                optimize: performOptimization
+            };
+
+        })();
+    </script>
+</body>
+</html>
