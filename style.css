@@ -1,4 +1,4 @@
-/* style.css - Dùng chung cho cả index.html và app.html */
+/* style.css - Dùng chung */
 * {
     margin: 0;
     padding: 0;
@@ -35,6 +35,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.04);
     text-align: center;
     animation: fadeUp 0.5s ease both;
+    transition: all 0.3s ease;
 }
 
 @keyframes fadeUp {
@@ -53,6 +54,7 @@ body {
     margin: 0 auto 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 215, 0, 0.2);
+    transition: all 0.3s ease;
 }
 
 .logo svg {
@@ -334,3 +336,14 @@ h1 {
 ::-webkit-scrollbar-track { background: #0d1322; }
 ::-webkit-scrollbar-thumb { background: #2a3650; border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: #3d4b66; }
+
+/* Activation state */
+.container.activated {
+    border-color: rgba(95, 220, 122, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(95, 220, 122, 0.05);
+}
+
+.container.activated .logo {
+    border-color: rgba(95, 220, 122, 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 30px rgba(95, 220, 122, 0.05);
+}
