@@ -1,9 +1,4 @@
-/* ============================================================
-   style.css - AIMTRICK Activation UI
-   Tối ưu cho màn hình nhỏ (mobile first) + dark theme
-   ============================================================ */
-
-/* ----- RESET & BASE ----- */
+/* style.css - Dùng chung cho cả index.html và app.html */
 * {
     margin: 0;
     padding: 0;
@@ -30,7 +25,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* ----- CONTAINER ----- */
 .container {
     background: linear-gradient(145deg, #141b2b, #1a2338);
     border-radius: 32px;
@@ -40,10 +34,14 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.04);
     text-align: center;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeUp 0.5s ease both;
 }
 
-/* ----- LOGO ----- */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .logo {
     width: 80px;
     height: 80px;
@@ -55,7 +53,6 @@ body {
     margin: 0 auto 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 215, 0, 0.2);
-    transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 .logo svg {
@@ -68,10 +65,9 @@ body {
     stroke-linejoin: round;
 }
 
-/* ----- TYPOGRAPHY ----- */
 h1 {
     color: #f5c842;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
     letter-spacing: 1px;
     text-shadow: 0 2px 8px rgba(245, 200, 66, 0.15);
@@ -105,7 +101,7 @@ h1 {
     border: 1px solid rgba(245, 200, 66, 0.1);
 }
 
-/* ----- KEY INPUT BOX ----- */
+/* KEY INPUT */
 .key-box {
     background: #0d1322;
     border-radius: 16px;
@@ -119,7 +115,7 @@ h1 {
 
 .key-box:focus-within {
     border-color: #f5c842;
-    box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.15), inset 0 0 0 1px rgba(245, 200, 66, 0.05);
+    box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.15);
 }
 
 .key-box input {
@@ -169,20 +165,57 @@ h1 {
 
 .key-box button:active {
     transform: scale(0.95);
-    box-shadow: 0 2px 6px rgba(245, 200, 66, 0.2);
 }
 
 .key-box button:disabled {
     opacity: 0.5;
     pointer-events: none;
     filter: grayscale(0.6);
-    transform: none;
 }
 
-/* ----- STATUS MESSAGE ----- */
+/* OPTIMIZE BUTTON */
+.optimize-btn {
+    background: linear-gradient(135deg, #f5c842, #e6b830);
+    border: none;
+    border-radius: 20px;
+    color: #0a0f1e;
+    font-weight: 800;
+    font-size: 22px;
+    padding: 22px 20px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 32px rgba(245, 200, 66, 0.3);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    touch-action: manipulation;
+    position: relative;
+    overflow: hidden;
+}
+
+.optimize-btn:active {
+    transform: scale(0.96);
+    box-shadow: 0 4px 16px rgba(245, 200, 66, 0.25);
+}
+
+.optimize-btn:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(0.5);
+}
+
+.optimize-btn .icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+/* STATUS */
 .status {
     min-height: 28px;
-    margin: 12px 0 20px;
+    margin: 18px 0 20px;
     font-size: 14px;
     font-weight: 500;
     display: flex;
@@ -207,20 +240,12 @@ h1 {
     to { transform: rotate(360deg); }
 }
 
-.status.success {
-    color: #5fdc7a;
-}
-.status.error {
-    color: #f86a6a;
-}
-.status.info {
-    color: #7a9cdc;
-}
-.status.warning {
-    color: #f5b342;
-}
+.status.success { color: #5fdc7a; }
+.status.error { color: #f86a6a; }
+.status.info { color: #7a9cdc; }
+.status.warning { color: #f5b342; }
 
-/* ----- INFO GRID ----- */
+/* INFO GRID */
 .info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -234,7 +259,6 @@ h1 {
     background: #0d1322;
     border-radius: 12px;
     padding: 12px 4px;
-    transition: background 0.2s ease;
 }
 
 .info-item .label {
@@ -250,20 +274,13 @@ h1 {
     font-size: 16px;
     font-weight: 700;
     margin-top: 4px;
-    transition: color 0.3s ease;
 }
 
-.info-item .value.limited {
-    color: #f5c842;
-}
-.info-item .value.unlimited {
-    color: #5fdc7a;
-}
-.info-item .value.permanent {
-    color: #7a9cdc;
-}
+.info-item .value.gold { color: #f5c842; }
+.info-item .value.green { color: #5fdc7a; }
+.info-item .value.blue { color: #7a9cdc; }
 
-/* ----- FOOTER ----- */
+/* FOOTER */
 .footer {
     margin-top: 24px;
     color: #3d4b66;
@@ -278,250 +295,42 @@ h1 {
     font-weight: 600;
 }
 
-/* ----- UTILITY ----- */
-.hidden {
-    display: none !important;
-}
-
-/* ============================================================
-   RESPONSIVE - TABLET & SMALL PHONE
-   ============================================================ */
-
-/* Tablet nhỏ & điện thoại ngang */
+/* RESPONSIVE */
 @media (max-width: 480px) {
-    .container {
-        padding: 24px 16px 20px;
-        border-radius: 24px;
-    }
-
-    h1 {
-        font-size: 24px;
-    }
-
-    .sub {
-        font-size: 12px;
-        margin-bottom: 22px;
-        padding-bottom: 16px;
-    }
-
-    .key-box {
-        padding: 4px 4px 4px 14px;
-        border-radius: 14px;
-    }
-
-    .key-box input {
-        font-size: 16px;
-        padding: 12px 0;
-        letter-spacing: 1px;
-    }
-
-    .key-box input::placeholder {
-        font-size: 14px;
-    }
-
-    .key-box button {
-        font-size: 14px;
-        padding: 10px 16px;
-        border-radius: 10px;
-    }
-
-    .info-grid {
-        gap: 8px;
-        padding-top: 16px;
-        margin-top: 18px;
-    }
-
-    .info-item {
-        padding: 10px 2px;
-        border-radius: 10px;
-    }
-
-    .info-item .value {
-        font-size: 14px;
-    }
-
-    .status {
-        font-size: 13px;
-        min-height: 24px;
-        margin: 8px 0 16px;
-    }
-
-    .logo {
-        width: 68px;
-        height: 68px;
-        border-radius: 20px;
-    }
-
-    .logo svg {
-        width: 40px;
-        height: 40px;
-    }
+    .container { padding: 24px 16px 20px; border-radius: 24px; }
+    h1 { font-size: 22px; }
+    .optimize-btn { font-size: 18px; padding: 18px 16px; border-radius: 16px; }
+    .optimize-btn .icon { font-size: 24px; }
+    .info-grid { gap: 8px; padding-top: 16px; margin-top: 18px; }
+    .info-item .value { font-size: 14px; }
+    .status { font-size: 13px; min-height: 24px; margin: 14px 0 16px; }
+    .logo { width: 68px; height: 68px; border-radius: 20px; }
+    .logo svg { width: 40px; height: 40px; }
+    .key-box input { font-size: 16px; padding: 12px 0; }
+    .key-box button { font-size: 14px; padding: 10px 16px; }
 }
 
-/* Điện thoại rất nhỏ (dưới 380px) */
 @media (max-width: 380px) {
-    .container {
-        padding: 18px 12px 16px;
-        border-radius: 20px;
-    }
-
-    h1 {
-        font-size: 20px;
-    }
-
-    .key-box {
-        flex-wrap: wrap;
-        background: transparent;
-        padding: 0;
-        border: none;
-        box-shadow: none;
-        gap: 10px;
-    }
-
-    .key-box input {
-        background: #0d1322;
-        border: 1px solid #2a3650;
-        border-radius: 14px;
-        padding: 14px 16px;
-        font-size: 15px;
-        text-align: center;
-    }
-
-    .key-box input:focus {
-        border-color: #f5c842;
-        box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.12);
-    }
-
-    .key-box button {
-        width: 100%;
-        justify-content: center;
-        padding: 14px;
-        margin-left: 0;
-        font-size: 16px;
-        border-radius: 14px;
-    }
-
-    .info-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
-    }
-
-    .info-item:last-child {
-        grid-column: span 2;
-    }
-
-    .info-item .value {
-        font-size: 13px;
-    }
-
-    .status {
-        font-size: 12px;
-    }
-
-    .footer {
-        font-size: 10px;
-        padding-top: 14px;
-        margin-top: 18px;
-    }
+    .container { padding: 18px 12px 16px; border-radius: 20px; }
+    h1 { font-size: 18px; }
+    .optimize-btn { font-size: 16px; padding: 16px 12px; border-radius: 14px; }
+    .info-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .info-item:last-child { grid-column: span 2; }
+    .key-box { flex-wrap: wrap; background: transparent; padding: 0; border: none; gap: 10px; }
+    .key-box input { background: #0d1322; border: 1px solid #2a3650; border-radius: 14px; padding: 14px 16px; text-align: center; }
+    .key-box button { width: 100%; padding: 14px; margin-left: 0; border-radius: 14px; }
 }
 
-/* ============================================================
-   HỖ TRỢ MÀN HÌNH LỚN (DESKTOP)
-   ============================================================ */
 @media (min-width: 768px) {
-    .container {
-        padding: 40px 36px 34px;
-        max-width: 480px;
-    }
-
-    h1 {
-        font-size: 32px;
-    }
-
-    .logo {
-        width: 92px;
-        height: 92px;
-        border-radius: 28px;
-    }
-
-    .logo svg {
-        width: 54px;
-        height: 54px;
-    }
-
-    .key-box input {
-        font-size: 20px;
-        padding: 16px 0;
-    }
-
-    .key-box button {
-        font-size: 16px;
-        padding: 14px 28px;
-    }
-
-    .info-item .value {
-        font-size: 18px;
-    }
+    .container { padding: 40px 36px 34px; max-width: 480px; }
+    h1 { font-size: 30px; }
+    .optimize-btn { font-size: 26px; padding: 26px 24px; border-radius: 24px; }
+    .logo { width: 92px; height: 92px; border-radius: 28px; }
+    .logo svg { width: 54px; height: 54px; }
+    .info-item .value { font-size: 18px; }
 }
 
-/* ============================================================
-   DARK MODE / PREFERS-COLOR-SCHEME (đã là dark, giữ nguyên)
-   ============================================================ */
-@media (prefers-color-scheme: light) {
-    /* Giữ nguyên dark theme vì đây là giao diện đặc trưng */
-    body {
-        background: #0a0f1e;
-    }
-}
-
-/* ============================================================
-   ANIMATION NHẸ KHI LOAD
-   ============================================================ */
-.container {
-    animation: fadeUp 0.5s ease both;
-}
-
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(18px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ============================================================
-   HỖ TRỢ TOUCH & TƯƠNG TÁC
-   ============================================================ */
-.key-box button,
-.key-box input {
-    touch-action: manipulation;
-}
-
-/* ============================================================
-   IN ĐẬM & NHẤN MẠNH THÔNG TIN QUAN TRỌNG
-   ============================================================ */
-.status .highlight {
-    font-weight: 700;
-    color: #f5c842;
-}
-
-/* ============================================================
-   SCROLLBAR (tùy chỉnh nhẹ)
-   ============================================================ */
-::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-}
-::-webkit-scrollbar-track {
-    background: #0d1322;
-}
-::-webkit-scrollbar-thumb {
-    background: #2a3650;
-    border-radius: 8px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #3d4b66;
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0d1322; }
+::-webkit-scrollbar-thumb { background: #2a3650; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #3d4b66; }
