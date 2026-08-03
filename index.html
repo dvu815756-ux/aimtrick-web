@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AIMTRICK - Kích hoạt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0f1e;
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+        }
+        .container {
+            background: linear-gradient(145deg, #141b2b, #1a2338);
+            border-radius: 32px;
+            padding: 32px 24px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: center;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: #1f2b42;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        .logo svg {
+            width: 48px;
+            height: 48px;
+            fill: none;
+            stroke: #f5c842;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        h1 {
+            color: #f5c842;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(245, 200, 66, 0.15);
+            margin-bottom: 6px;
+        }
+        .sub {
+            color: #8a9bb5;
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding-bottom: 20px;
+        }
+        .key-box {
+            background: #0d1322;
+            border-radius: 16px;
+            padding: 6px 6px 6px 18px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #2a3650;
+            transition: border 0.25s;
+            margin-bottom: 16px;
+        }
+        .key-box:focus-within {
+            border-color: #f5c842;
+            box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.15);
+        }
+        .key-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #eef2f9;
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            width: 100%;
+            padding: 14px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .key-box input::placeholder {
+            color: #3d4b66;
+            font-weight: 400;
+            letter-spacing: 1px;
+            font-size: 15px;
+        }
+        .key-box button {
+            background: #f5c842;
+            border: none;
+            border-radius: 12px;
+            color: #0a0f1e;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 12px 22px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(245, 200, 66, 0.25);
+        }
+        .key-box button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 6px rgba(245, 200, 66, 0.2);
+        }
+        .key-box button:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.6);
+        }
+        .status {
+            min-height: 28px;
+            margin: 12px 0 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .status.success {
+            color: #5fdc7a;
+        }
+        .status.error {
+            color: #f86a6a;
+        }
+        .status.info {
+            color: #7a9cdc;
+        }
+        .status .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #2a3650;
+            border-top-color: #f5c842;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .info-item {
+            background: #0d1322;
+            border-radius: 12px;
+            padding: 12px 4px;
+        }
+        .info-item .label {
+            color: #5e7290;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .info-item .value {
+            color: #eef2f9;
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .info-item .value.limited {
+            color: #f5c842;
+        }
+        .info-item .value.unlimited {
+            color: #5fdc7a;
+        }
+
+        .footer {
+            margin-top: 24px;
+            color: #3d4b66;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .footer span {
+            color: #f5c842;
+            font-weight: 600;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(245, 200, 66, 0.08);
+            color: #f5c842;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 40px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(245, 200, 66, 0.1);
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- icon -->
+        <div class="logo">
+            <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M16 28 L22 22 L28 28 L34 22" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                <circle cx="24" cy="16" r="2" fill="#f5c842"/>
+                <path d="M12 32 L18 26 L24 32 L30 26 L36 32" stroke="currentColor" stroke-width="1.8" fill="none" opacity="0.6"/>
+            </svg>
+        </div>
+
+        <h1>AIMTRICK</h1>
+        <div class="sub">KÍCH HOẠT BẢN QUYỀN <span class="badge">v3.2</span></div>
+
+        <!-- input key -->
+        <div class="key-box">
+            <input type="text" id="licenseKey" placeholder="Nhập mã kích hoạt" autocomplete="off" spellcheck="false">
+            <button id="activateBtn">KÍCH HOẠT</button>
+        </div>
+
+        <!-- status -->
+        <div id="statusMessage" class="status info">
+            <span>◆</span> Nhập key để kích hoạt
+        </div>
+
+        <!-- thông tin key -->
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="label">Loại key</div>
+                <div class="value" id="keyType">---</div>
+            </div>
+            <div class="info-item">
+                <div class="label">Thiết bị</div>
+                <div class="value" id="deviceLimit">---</div>
+            </div>
+            <div class="info-item">
+                <div class="label">Hạn dùng</div>
+                <div class="value" id="expiryInfo">---</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span>VTĐZAI</span> • Bảo hành dài hạn • Hỗ trợ 24/7
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ----- CẤU HÌNH KEY MẪU (chỉ để demo, bạn thay bằng logic thật) -----
+            // Key 24h: vô hạn thiết bị, bắt đầu bằng "24H-"
+            // Key 7 ngày: tối đa 70 thiết bị, bắt đầu bằng "7D-"
+            // Key vĩnh viễn: 1 thiết bị, bắt đầu bằng "VV-"
+            // Trong thực tế, key sẽ được validate qua server.
+            // Dưới đây là logic giả lập phía client để hiển thị.
+
+            const DEMO_KEYS = {
+                "24H-DEMO-001": { type: "24h", deviceLimit: Infinity, expiry: "24 giờ" },
+                "7D-DEMO-001":  { type: "7ngay", deviceLimit: 70, expiry: "7 ngày" },
+                "VV-DEMO-001":  { type: "vĩnh viễn", deviceLimit: 1, expiry: "Vĩnh viễn" }
+            };
+
+            // Lưu danh sách thiết bị đã kích hoạt (mô phỏng)
+            // Trong thực tế lưu trên server, ở đây lưu localStorage để demo.
+            function getActivatedDevices(key) {
+                try {
+                    const raw = localStorage.getItem('aimtrick_devices_' + key);
+                    if (raw) return JSON.parse(raw);
+                } catch (e) {}
+                return [];
+            }
+
+            function saveActivatedDevices(key, devices) {
+                localStorage.setItem('aimtrick_devices_' + key, JSON.stringify(devices));
+            }
+
+            function getDeviceId() {
+                let id = localStorage.getItem('aimtrick_device_id');
+                if (!id) {
+                    id = 'DEV-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6);
+                    localStorage.setItem('aimtrick_device_id', id);
+                }
+                return id;
+            }
+
+            const currentDevice = getDeviceId();
+
+            // Hàm xác thực key (giả lập, bạn thay bằng API call thực tế)
+            function validateKey(key) {
+                // Loại bỏ khoảng trắng
+                const cleanKey = key.trim().toUpperCase();
+                if (!cleanKey) return { valid: false, reason: 'Key trống' };
+
+                // Kiểm tra key mẫu
+                if (DEMO_KEYS[cleanKey]) {
+                    return { valid: true, keyData: DEMO_KEYS[cleanKey], key: cleanKey };
+                }
+
+                // Kiểm tra key tự tạo theo cấu trúc (bạn tự định nghĩa)
+                // 24H-xxxx: vô hạn
+                if (cleanKey.startsWith('24H-') && cleanKey.length >= 8) {
+                    return { valid: true, keyData: { type: '24h', deviceLimit: Infinity, expiry: '24 giờ' }, key: cleanKey };
+                }
+                // 7D-xxxx: 70 thiết bị
+                if (cleanKey.startsWith('7D-') && cleanKey.length >= 8) {
+                    return { valid: true, keyData: { type: '7ngay', deviceLimit: 70, expiry: '7 ngày' }, key: cleanKey };
+                }
+                // VV-xxxx: 1 thiết bị
+                if (cleanKey.startsWith('VV-') && cleanKey.length >= 8) {
+                    return { valid: true, keyData: { type: 'vĩnh viễn', deviceLimit: 1, expiry: 'Vĩnh viễn' }, key: cleanKey };
+                }
+
+                return { valid: false, reason: 'Key không hợp lệ hoặc đã hết hạn' };
+            }
+
+            // Kiểm tra thiết bị đã kích hoạt chưa
+            function isDeviceActivated(key, deviceId) {
+                const devices = getActivatedDevices(key);
+                return devices.includes(deviceId);
+            }
+
+            // Kích hoạt thiết bị
+            function activateDevice(key, deviceId) {
+                const devices = getActivatedDevices(key);
+                if (!devices.includes(deviceId)) {
+                    devices.push(deviceId);
+                    saveActivatedDevices(key, devices);
+                }
+                return devices;
+            }
+
+            // Xử lý kích hoạt
+            function handleActivation() {
+                const input = document.getElementById('licenseKey');
+                const statusDiv = document.getElementById('statusMessage');
+                const keyTypeEl = document.getElementById('keyType');
+                const deviceLimitEl = document.getElementById('deviceLimit');
+                const expiryEl = document.getElementById('expiryInfo');
+                const btn = document.getElementById('activateBtn');
+
+                const rawKey = input.value;
+                const result = validateKey(rawKey);
+
+                if (!result.valid) {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '✖ ' + result.reason;
+                    keyTypeEl.textContent = '---';
+                    deviceLimitEl.textContent = '---';
+                    expiryEl.textContent = '---';
+                    return;
+                }
+
+                const { key, keyData } = result;
+                const { type, deviceLimit, expiry } = keyData;
+
+                // Kiểm tra giới hạn thiết bị
+                const devices = getActivatedDevices(key);
+                const currentCount = devices.length;
+                const isAlready = devices.includes(currentDevice);
+
+                if (!isAlready && currentCount >= deviceLimit && deviceLimit !== Infinity) {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '✖ Đã đạt giới hạn ' + deviceLimit + ' thiết bị';
+                    keyTypeEl.textContent = type;
+                    deviceLimitEl.textContent = currentCount + '/' + deviceLimit;
+                    expiryEl.textContent = expiry;
+                    return;
+                }
+
+                // Kích hoạt
+                if (!isAlready) {
+                    activateDevice(key, currentDevice);
+                }
+
+                // Cập nhật giao diện
+                const newCount = getActivatedDevices(key).length;
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✔ Kích hoạt thành công!';
+                keyTypeEl.textContent = type;
+                deviceLimitEl.textContent = (deviceLimit === Infinity) ? '∞' : (newCount + '/' + deviceLimit);
+                expiryEl.textContent = expiry;
+
+                // Lưu trạng thái kích hoạt vào localStorage để duy trì
+                localStorage.setItem('aimtrick_active_key', key);
+                localStorage.setItem('aimtrick_active_type', type);
+                localStorage.setItem('aimtrick_active_expiry', expiry);
+                localStorage.setItem('aimtrick_active_devices', newCount);
+
+                // Ẩn nút sau khi kích hoạt thành công (tùy chọn)
+                btn.disabled = true;
+                input.disabled = true;
+                btn.textContent = '✓ ĐÃ KÍCH HOẠT';
+
+                // Gọi API báo thành công (nếu có)
+                // fetch('https://your-server.com/activate', { method: 'POST', body: JSON.stringify({ key, device: currentDevice }) });
+            }
+
+            // Khôi phục trạng thái đã kích hoạt
+            function restoreActivation() {
+                const savedKey = localStorage.getItem('aimtrick_active_key');
+                if (!savedKey) return;
+
+                const result = validateKey(savedKey);
+                if (!result.valid) {
+                    // Xóa dữ liệu cũ nếu key không hợp lệ
+                    localStorage.removeItem('aimtrick_active_key');
+                    localStorage.removeItem('aimtrick_active_type');
+                    localStorage.removeItem('aimtrick_active_expiry');
+                    localStorage.removeItem('aimtrick_active_devices');
+                    return;
+                }
+
+                const { key, keyData } = result;
+                const { type, deviceLimit, expiry } = keyData;
+                const devices = getActivatedDevices(key);
+                const isActive = devices.includes(currentDevice);
+
+                if (!isActive) {
+                    // Nếu thiết bị chưa được kích hoạt với key này, xóa trạng thái
+                    localStorage.removeItem('aimtrick_active_key');
+                    localStorage.removeItem('aimtrick_active_type');
+                    localStorage.removeItem('aimtrick_active_expiry');
+                    localStorage.removeItem('aimtrick_active_devices');
+                    return;
+                }
+
+                // Cập nhật giao diện
+                document.getElementById('keyType').textContent = type;
+                document.getElementById('deviceLimit').textContent = (deviceLimit === Infinity) ? '∞' : (devices.length + '/' + deviceLimit);
+                document.getElementById('expiryInfo').textContent = expiry;
+
+                const statusDiv = document.getElementById('statusMessage');
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✔ Đã kích hoạt';
+
+                const btn = document.getElementById('activateBtn');
+                const input = document.getElementById('licenseKey');
+                btn.disabled = true;
+                input.disabled = true;
+                btn.textContent = '✓ ĐÃ KÍCH HOẠT';
+                input.value = key;
+            }
+
+            // Gán sự kiện
+            document.getElementById('activateBtn').addEventListener('click', handleActivation);
+            document.getElementById('licenseKey').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleActivation();
+                }
+            });
+
+            // Tự động restore trạng thái
+            restoreActivation();
+
+            // (Tùy chọn) tự động kích hoạt nếu có key trên URL ?key=...
+            const params = new URLSearchParams(window.location.search);
+            const urlKey = params.get('key');
+            if (urlKey) {
+                document.getElementById('licenseKey').value = urlKey;
+                setTimeout(handleActivation, 300);
+            }
+
+            // Hỗ trợ chức năng "dùng thử" hoặc reset (ẩn)
+            console.log('AIMTRICK v3.2 - Hệ thống kích hoạt sẵn sàng.');
+        })();
+    </script>
+</body>
+</html>
