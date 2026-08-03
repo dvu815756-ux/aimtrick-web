@@ -1,56 +1,207 @@
-<!-- app.html -->
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AIMTRICK - Tối ưu thiết bị</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container" id="appContainer">
-        <div class="logo">
-            <svg viewBox="0 0 48 48">
-                <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M16 28 L22 22 L28 28 L34 22" stroke="currentColor" stroke-width="2.5" fill="none"/>
-                <circle cx="24" cy="16" r="2" fill="#f5c842"/>
-                <path d="M12 32 L18 26 L24 32 L30 26 L36 32" stroke="currentColor" stroke-width="1.8" fill="none" opacity="0.6"/>
-            </svg>
-        </div>
+/* app.js - App Main v3.2.4 */
+(function() {
+    'use strict';
 
-        <h1>AIMTRICK</h1>
-        <div class="sub">TỐI ƯU THIẾT BỊ <span class="badge">v3.2.4</span></div>
+    // ============================================================
+    // DOM REFS
+    // ============================================================
+    const DOM = {
+        container: document.getElementById('appContainer'),
+        optimizeBtn: document.getElementById('optimizeBtn'),
+        statusMessage: document.getElementById('statusMessage'),
+        cpuInfo: document.getElementById('cpuInfo'),
+        ramInfo: document.getElementById('ramInfo'),
+        statusInfo: document.getElementById('statusInfo')
+    };
 
-        <button class="optimize-btn" id="optimizeBtn">
-            <span class="icon">⚡</span>
-            TỐI ƯU NGAY
-        </button>
+    let isProcessing = false;
 
-        <div id="statusMessage" class="status info">
-            <span>◆</span> Sẵn sàng tối ưu
-        </div>
+    // ============================================================
+    // UI HELPERS
+    // ============================================================
+    function setStatus(message, type, showSpinner) {
+        if (!DOM.statusMessage) return;
+        type = type || 'info';
+        DOM.statusMessage.className = 'status ' + type;
+        let html = '';
+        if (showSpinner) {
+            html += '<span class="spinner"></span> ';
+        } else {
+            const icons = { success: '✔', error: '✖', warning: '⚠', info: '◆' };
+            html += (icons[type] || '◆') + ' ';
+        }
+        html += message;
+        DOM.statusMessage.innerHTML = html;
+    }
 
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="label">CPU</div>
-                <div class="value gold" id="cpuInfo">---</div>
-            </div>
-            <div class="info-item">
-                <div class="label">RAM</div>
-                <div class="value green" id="ramInfo">---</div>
-            </div>
-            <div class="info-item">
-                <div class="label">TRẠNG THÁI</div>
-                <div class="value blue" id="statusInfo">Chờ</div>
-            </div>
-        </div>
+    // ============================================================
+    // DEVICE INFO (XỬ LÝ FALLBACK)
+    // ============================================================
+    function getDeviceInfo() {
+        let cores = 4;
+        let ram = 4;
 
-        <div class="footer">
-            <span>VTĐZAI</span> • Bảo hành dài hạn • Hỗ trợ 24/7
-        </div>
-    </div>
+        try {
+            if (navigator.hardwareConcurrency) {
+                cores = navigator.hardwareConcurrency;
+            }
 
-    <script src="auth.js"></script>
-    <script src="app.js"></script>
-</body>
-</html>
+            if (navigator.deviceMemory) {
+                ram = navigator.deviceMemory;
+            } else {
+                // Fallback: ước lượng từ User Agent
+                const ua = navigator.userAgent.toLowerCase();
+                if (ua.includes('iphone') || ua.includes('ipad')) {
+                    ram = 4;
+                } else if (ua.includes('android')) {
+                    ram = 6;
+                } else if (ua.includes('windows') || ua.includes('mac')) {
+                    ram = 8;
+                } else {
+                    ram = 4;
+                }
+            }
+        } catch (e) {
+            cores = 4;
+            ram = 4;
+        }
+
+        return {
+            cores: Math.max(1, Math.min(cores, 128)),
+            ram: Math.max(0.5, Math.min(ram, 128))
+        };
+    }
+
+    // ============================================================
+    // OPTIMIZATION
+    // ============================================================
+    function performOptimization() {
+        if (isProcessing) return;
+        if (!DOM.optimizeBtn) return;
+
+        isProcessing = true;
+        DOM.optimizeBtn.disabled = true;
+
+        setStatus('Đang tối ưu...', 'info', true);
+        if (DOM.statusInfo) {
+            DOM.statusInfo.textContent = 'Đang xử lý';
+            DOM.statusInfo.className = 'value blue';
+        }
+
+        const info = getDeviceInfo();
+        if (DOM.cpuInfo) DOM.cpuInfo.textContent = info.cores + ' nhân';
+        if (DOM.ramInfo) DOM.ramInfo.textContent = info.ram + ' GB';
+
+        const steps = [
+            { progress: 20, msg: 'Đang dọn dẹp bộ nhớ cache...' },
+            { progress: 45, msg: 'Đang tối ưu luồng xử lý...' },
+            { progress: 70, msg: 'Đang cân bằng tài nguyên...' },
+            { progress: 90, msg: 'Đang áp dụng cấu hình tối ưu...' }
+        ];
+
+        let stepIndex = 0;
+
+        function runStep() {
+            if (stepIndex >= steps.length) {
+                setStatus('Tối ưu thành công! Thiết bị đã đạt hiệu suất tối đa.', 'success');
+                if (DOM.statusInfo) {
+                    DOM.statusInfo.textContent = 'Đã tối ưu';
+                    DOM.statusInfo.className = 'value green';
+                }
+                if (DOM.optimizeBtn) {
+                    DOM.optimizeBtn.disabled = false;
+                }
+                isProcessing = false;
+                return;
+            }
+
+            const step = steps[stepIndex];
+            setStatus(step.msg, 'info', true);
+            if (DOM.statusInfo) {
+                DOM.statusInfo.textContent = step.progress + '%';
+            }
+            stepIndex++;
+
+            // Mô phỏng CPU tăng nhẹ
+            const extraCores = Math.floor(Math.random() * 2);
+            if (DOM.cpuInfo) {
+                DOM.cpuInfo.textContent = (info.cores + extraCores) + ' nhân';
+            }
+
+            setTimeout(runStep, 600 + Math.random() * 400);
+        }
+
+        setTimeout(runStep, 400);
+    }
+
+    // ============================================================
+    // CHECK ACTIVATION
+    // ============================================================
+    function checkActivation() {
+        if (!window.AIMTRICK) {
+            setStatus('Lỗi: Không tìm thấy hệ thống xác thực', 'error');
+            return false;
+        }
+
+        if (!window.AIMTRICK.isActivated()) {
+            setStatus('Chưa kích hoạt bản quyền. Chuyển về trang kích hoạt...', 'error');
+            setTimeout(function() {
+                window.location.replace('index.html');
+            }, 1500);
+            return false;
+        }
+
+        // Hiển thị thông tin key
+        const info = window.AIMTRICK.getKeyInfo();
+        if (info && info.type && DOM.cpuInfo) {
+            DOM.cpuInfo.textContent = info.type;
+        }
+        if (DOM.statusInfo) {
+            DOM.statusInfo.textContent = 'Đã kích hoạt';
+            DOM.statusInfo.className = 'value green';
+        }
+        return true;
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    function init() {
+        // Kiểm tra DOM
+        if (!DOM.container) {
+            console.error('AIMTRICK: Container not found');
+            return;
+        }
+
+        // Kiểm tra kích hoạt
+        const activated = checkActivation();
+        if (!activated) {
+            if (DOM.optimizeBtn) DOM.optimizeBtn.disabled = true;
+            return;
+        }
+
+        // Hiển thị thông tin thiết bị
+        const info = getDeviceInfo();
+        if (DOM.cpuInfo) DOM.cpuInfo.textContent = info.cores + ' nhân';
+        if (DOM.ramInfo) DOM.ramInfo.textContent = info.ram + ' GB';
+        if (DOM.statusInfo) {
+            DOM.statusInfo.textContent = 'Sẵn sàng';
+            DOM.statusInfo.className = 'value blue';
+        }
+        setStatus('Sẵn sàng tối ưu', 'info');
+
+        // Gán sự kiện
+        if (DOM.optimizeBtn) {
+            DOM.optimizeBtn.addEventListener('click', performOptimization);
+        }
+
+        console.log('[AIMTRICK] App ready v' + (window.AIMTRICK.state ? window.AIMTRICK.state.version : '3.2.4'));
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
