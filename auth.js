@@ -1,16 +1,10 @@
-// auth.js - VTĐZAI - HỆ THỐNG KEY & SUPABASE (dùng chung)
-// ===== ĐÃ SỬA LỖI THEO BÁO CÁO =====
+// auth.js - VTĐZAI - BẢN NÂNG CẤP CHỊU LỖI
 (function() {
-    // ===== CẤU HÌNH SUPABASE - ĐÃ THAY BẰNG GIÁ TRỊ THẬT =====
-    // Lưu ý: Thay thế bằng thông tin project của bạn
     const SUPABASE_URL = 'https://yhxmbvxhnzgsqsyjvjks.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloeG1idnhobnpnc3FzeWp2amtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU0MjU2MDAsImV4cCI6MjAzMTAwMTYwMH0.6hJkLmN9qR2tX7wY4zA1bC3dE5fG8iK0oLpQ2sT4uV6';
-    // =========================================================
 
     const STORAGE_KEY = 'vtd_auth_data';
-    const ACTIVATED_KEY = 'vtd_activated';
 
-    // Hàm gọi API Supabase REST
     async function supabaseRequest(endpoint, method = 'GET', body = null) {
         const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
         const headers = {
@@ -18,22 +12,22 @@
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json'
         };
-        const options = {
-            method: method,
-            headers: headers
-        };
-        if (body) {
-            options.body = JSON.stringify(body);
+        const options = { method, headers };
+        if (body) options.body = JSON.stringify(body);
+
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+            }
+            return await response.json();
+        } catch (err) {
+            // Bắn lỗi chi tiết
+            throw new Error(`Không thể kết nối Supabase: ${err.message}. Kiểm tra CORS và URL.`);
         }
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error(`Supabase error ${response.status}: ${text}`);
-        }
-        return response.json();
     }
 
-    // Tạo device ID
     function getDeviceId() {
         let deviceId = localStorage.getItem('vtd_device_id');
         if (!deviceId) {
@@ -60,87 +54,86 @@
         return deviceId;
     }
 
-    // Hàm kích hoạt với Supabase
     async function activateKeyWithSupabase(rawKey) {
         const deviceId = getDeviceId();
         const keyCode = rawKey.trim().toUpperCase();
 
-        // Bước 1: Kiểm tra key tồn tại và còn hiệu lực
-        const keys = await supabaseRequest(
-            `keys?key_code=eq.${encodeURIComponent(keyCode)}&select=*`
-        );
-        if (!keys || keys.length === 0) {
-            return { success: false, message: 'KEY KHÔNG TỒN TẠI' };
-        }
-        const keyData = keys[0];
-        if (!keyData.is_active) {
-            return { success: false, message: 'KEY ĐÃ BỊ VÔ HIỆU HÓA' };
-        }
-
-        const expiryType = keyData.expiry_type;
-        const deviceLimit = keyData.device_limit;
-
-        // Bước 2: Kiểm tra số lượng thiết bị cho key 7D
-        if (expiryType === '7D') {
-            const countResult = await supabaseRequest(
-                `device_count?key_code=eq.${encodeURIComponent(keyCode)}&select=count`
+        try {
+            const keys = await supabaseRequest(
+                `keys?key_code=eq.${encodeURIComponent(keyCode)}&select=*`
             );
-            const currentCount = (countResult && countResult.length > 0) ? countResult[0].count : 0;
-            if (currentCount >= deviceLimit) {
-                return { success: false, message: 'KEY 7 NGÀY ĐÃ ĐẠT GIỚI HẠN 70 THIẾT BỊ' };
+            if (!keys || keys.length === 0) {
+                return { success: false, message: 'KEY KHÔNG TỒN TẠI' };
             }
-        }
+            const keyData = keys[0];
+            if (!keyData.is_active) {
+                return { success: false, message: 'KEY ĐÃ BỊ VÔ HIỆU HÓA' };
+            }
 
-        // Bước 3: Kiểm tra key VV đã dùng trên device khác
-        if (expiryType === 'VV') {
-            const existing = await supabaseRequest(
-                `activations?key_code=eq.${encodeURIComponent(keyCode)}&select=device_id`
-            );
-            if (existing && existing.length > 0) {
-                const usedDevice = existing[0].device_id;
-                if (usedDevice !== deviceId) {
-                    return { success: false, message: 'KEY VĨNH VIỄN ĐÃ ĐƯỢC SỬ DỤNG TRÊN THIẾT BỊ KHÁC' };
+            const expiryType = keyData.expiry_type;
+            const deviceLimit = keyData.device_limit;
+
+            if (expiryType === '7D') {
+                const countResult = await supabaseRequest(
+                    `device_count?key_code=eq.${encodeURIComponent(keyCode)}&select=count`
+                );
+                const currentCount = (countResult && countResult.length > 0) ? countResult[0].count : 0;
+                if (currentCount >= deviceLimit) {
+                    return { success: false, message: 'KEY 7 NGÀY ĐÃ ĐẠT GIỚI HẠN 70 THIẾT BỊ' };
                 }
             }
-        }
 
-        // Bước 4: Kiểm tra xem device đã kích hoạt key này chưa
-        const existingAct = await supabaseRequest(
-            `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}&select=*`
-        );
-        if (existingAct && existingAct.length > 0) {
-            const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
-                               expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
-                               null;
-            await supabaseRequest(
-                `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}`,
-                'PATCH',
-                { valid_until: validUntil }
+            if (expiryType === 'VV') {
+                const existing = await supabaseRequest(
+                    `activations?key_code=eq.${encodeURIComponent(keyCode)}&select=device_id`
+                );
+                if (existing && existing.length > 0) {
+                    const usedDevice = existing[0].device_id;
+                    if (usedDevice !== deviceId) {
+                        return { success: false, message: 'KEY VĨNH VIỄN ĐÃ ĐƯỢC SỬ DỤNG TRÊN THIẾT BỊ KHÁC' };
+                    }
+                }
+            }
+
+            const existingAct = await supabaseRequest(
+                `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}&select=*`
             );
-        } else {
-            const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
-                               expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
-                               null;
-            await supabaseRequest('activations', 'POST', {
-                key_code: keyCode,
-                device_id: deviceId,
-                valid_until: validUntil
-            });
-        }
+            if (existingAct && existingAct.length > 0) {
+                const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
+                                   expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
+                                   null;
+                await supabaseRequest(
+                    `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}`,
+                    'PATCH',
+                    { valid_until: validUntil }
+                );
+            } else {
+                const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
+                                   expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
+                                   null;
+                await supabaseRequest('activations', 'POST', {
+                    key_code: keyCode,
+                    device_id: deviceId,
+                    valid_until: validUntil
+                });
+            }
 
-        const authData = {
-            key: keyCode,
-            expiry: expiryType,
-            deviceId: deviceId,
-            activatedAt: Date.now(),
-            validUntil: expiryType === 'VV' ? Infinity : Date.now() + 
-                (expiryType === '24H' ? 24*60*60*1000 : 7*24*60*60*1000)
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
-        return { success: true, data: authData };
+            const authData = {
+                key: keyCode,
+                expiry: expiryType,
+                deviceId: deviceId,
+                activatedAt: Date.now(),
+                validUntil: expiryType === 'VV' ? Infinity : Date.now() + 
+                    (expiryType === '24H' ? 24*60*60*1000 : 7*24*60*60*1000)
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
+            return { success: true, data: authData };
+
+        } catch (error) {
+            return { success: false, message: 'LỖI KẾT NỐI SUPABASE: ' + error.message };
+        }
     }
 
-    // Kiểm tra trạng thái kích hoạt (local + remote)
     async function checkActivationRemote() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return { valid: false, reason: 'CHƯA KÍCH HOẠT' };
@@ -166,9 +159,9 @@
                 return { valid: false, reason: 'KEY ĐÃ HẾT HẠN' };
             }
             return { valid: true, data: data };
-        } catch (e) {
+        } catch (error) {
             localStorage.removeItem(STORAGE_KEY);
-            return { valid: false, reason: 'LỖI PHÂN TÍCH' };
+            return { valid: false, reason: 'LỖI KẾT NỐI: ' + error.message };
         }
     }
 
@@ -176,7 +169,6 @@
         return checkActivationRemote();
     }
 
-    // Lấy offset data
     function getOffsetData() {
         return {
             moveSpeedScale: '0x20',
@@ -202,11 +194,6 @@
         };
     }
 
-    // ===== ĐÃ XÓA console.log THEO YÊU CẦU =====
-    // DÒNG 219 CŨ: console.log('[VTĐZAI] Supabase auth sẵn sàng. Device ID:', getDeviceId());
-    // ĐÃ ĐƯỢC GỠ BỎ HOÀN TOÀN
-
-    // Export
     window.VTDZAI_AUTH = {
         activateKeyWithSupabase: activateKeyWithSupabase,
         checkActivation: checkActivation,
@@ -214,5 +201,4 @@
         getOffsetData: getOffsetData,
         supabaseRequest: supabaseRequest
     };
-
 })();
