@@ -1,4 +1,4 @@
-// app.js - VTĐZAI - GIAO DIỆN CHÍNH & OFFSET + WEBCLIP
+// app.js - VTĐZAI - GIAO DIỆN CHÍNH
 (function() {
     const auth = window.VTDZAI_AUTH;
 
@@ -57,14 +57,12 @@
             canvas.height = h;
             const ctx = canvas.getContext('2d');
 
-            // Gradient nền
             const grad = ctx.createRadialGradient(w/2, h/2, 10, w/2, h/2, w/2);
             grad.addColorStop(0, '#0a1a2a');
             grad.addColorStop(1, '#000000');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, w, h);
 
-            // Lưới offset
             const data = auth.getOffsetData();
             const keys = Object.keys(data);
             const cols = 4;
@@ -96,7 +94,6 @@
                 ctx.fillText(val, x, y + 14);
             }
 
-            // Tiêu đề
             ctx.fillStyle = '#44ffaa44';
             ctx.font = '18px Courier New';
             ctx.textAlign = 'right';
@@ -105,7 +102,6 @@
             ctx.font = '10px Courier New';
             ctx.fillText('LevelPhotograph : MonoBehaviour', w-20, 50);
 
-            // Camera icon
             ctx.fillStyle = '#44aaff22';
             ctx.beginPath();
             ctx.arc(w-60, h-40, 20, 0, Math.PI*2);
@@ -115,7 +111,6 @@
             ctx.textAlign = 'center';
             ctx.fillText('📷', w-60, h-34);
 
-            // Vẽ thêm thông tin kết nối Supabase
             ctx.fillStyle = '#44668866';
             ctx.font = '9px Courier New';
             ctx.textAlign = 'left';
