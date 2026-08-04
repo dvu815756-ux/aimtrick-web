@@ -1,4 +1,4 @@
-// script.js - VTĐZAI - XỬ LÝ KÍCH HOẠT VỚI SUPABASE
+// script.js - VTĐZAI - XỬ LÝ KÍCH HOẠT
 (function() {
     const keyInput = document.getElementById('keyInput');
     const activateBtn = document.getElementById('activateBtn');
@@ -60,9 +60,6 @@
 
     window.addEventListener('load', function() {
         keyInput.focus();
-        if (localStorage.getItem('vtd_activated') === 'true') {
-            // Kiểm tra trạng thái khi load
-        }
     });
 
     keyInput.addEventListener('focus', function() {
@@ -73,5 +70,4 @@
         this.style.borderColor = '#00aaff';
         this.style.boxShadow = 'none';
     });
-
 })();
