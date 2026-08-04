@@ -1,9 +1,9 @@
-// auth.js - VTĐZAI - PROJECT MỚI
+// auth.js - VTĐZAI - KHỚP VỚI BẢNG keys (key_type, status)
 (function() {
-    // ===== CẤU HÌNH SUPABASE (PROJECT MỚI) =====
+    // ===== CẤU HÌNH SUPABASE =====
     const SUPABASE_URL = 'https://skvytgfkiqavchpchnnq.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrdnl0Z2ZraXFhdmNocGNobm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MDgwMTcsImV4cCI6MjEwMTM4NDAxN30.Z2KLheGcLZxiVXlKdwv6D_h-XVRp_RHGBzaDHqzS0wY';
-    // ============================================
+    // =================================
 
     const STORAGE_KEY = 'vtd_auth_data';
 
@@ -64,27 +64,31 @@
         try {
             // Kiểm tra key tồn tại
             const keys = await supabaseRequest(`keys?key_code=eq.${encodeURIComponent(keyCode)}&select=*`);
+            console.log('[VTĐZAI] Kết quả tra cứu key:', keys);
+
             if (!keys || keys.length === 0) {
                 return { success: false, message: 'KEY KHÔNG TỒN TẠI' };
             }
             const keyData = keys[0];
-            if (!keyData.is_active) {
+            
+            // ===== SỬA: dùng cột status thay vì is_active =====
+            if (keyData.status !== 'active') {
                 return { success: false, message: 'KEY ĐÃ BỊ VÔ HIỆU HÓA' };
             }
 
-            const expiryType = keyData.expiry_type;
+            // ===== SỬA: dùng cột key_type thay vì expiry_type =====
+            const expiryType = keyData.key_type;
             const deviceLimit = keyData.device_limit;
+            const deviceUsed = keyData.device_used || 0;
 
             // Key 7D - kiểm tra số lượng device
             if (expiryType === '7D') {
-                const countResult = await supabaseRequest(`device_count?key_code=eq.${encodeURIComponent(keyCode)}&select=count`);
-                const currentCount = (countResult && countResult.length > 0) ? countResult[0].count : 0;
-                if (currentCount >= deviceLimit) {
+                if (deviceUsed >= deviceLimit) {
                     return { success: false, message: 'KEY 7 NGÀY ĐÃ ĐẠT GIỚI HẠN 70 THIẾT BỊ' };
                 }
             }
 
-            // Key VV - kiểm tra device khác
+            // Key VV - kiểm tra device khác (kiểm tra qua bảng activations)
             if (expiryType === 'VV') {
                 const existing = await supabaseRequest(`activations?key_code=eq.${encodeURIComponent(keyCode)}&select=device_id`);
                 if (existing && existing.length > 0) {
@@ -97,22 +101,38 @@
 
             // Kiểm tra device đã kích hoạt chưa
             const existingAct = await supabaseRequest(`activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}&select=*`);
-            const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
-                               expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
-                               null;
+            
+            // Tính thời gian hết hạn
+            let validUntil = null;
+            if (expiryType === '24H') {
+                validUntil = new Date(Date.now() + 24*60*60*1000).toISOString();
+            } else if (expiryType === '7D') {
+                validUntil = new Date(Date.now() + 7*24*60*60*1000).toISOString();
+            }
 
             if (existingAct && existingAct.length > 0) {
+                // Cập nhật activation
                 await supabaseRequest(
                     `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}`,
                     'PATCH',
                     { valid_until: validUntil }
                 );
             } else {
+                // Tạo activation mới
                 await supabaseRequest('activations', 'POST', {
                     key_code: keyCode,
                     device_id: deviceId,
                     valid_until: validUntil
                 });
+
+                // Tăng device_used nếu là key 7D
+                if (expiryType === '7D') {
+                    await supabaseRequest(
+                        `keys?key_code=eq.${encodeURIComponent(keyCode)}`,
+                        'PATCH',
+                        { device_used: deviceUsed + 1 }
+                    );
+                }
             }
 
             const authData = {
@@ -127,6 +147,7 @@
             return { success: true, data: authData };
 
         } catch (error) {
+            console.error('[VTĐZAI] Lỗi:', error);
             return { success: false, message: 'LỖI KẾT NỐI SUPABASE: ' + error.message };
         }
     }
@@ -141,11 +162,14 @@
                 localStorage.removeItem(STORAGE_KEY);
                 return { valid: false, reason: 'THIẾT BỊ KHÔNG KHỚP' };
             }
-            const keys = await supabaseRequest(`keys?key_code=eq.${encodeURIComponent(data.key)}&select=is_active`);
-            if (!keys || keys.length === 0 || !keys[0].is_active) {
+            
+            // ===== SỬA: dùng cột status =====
+            const keys = await supabaseRequest(`keys?key_code=eq.${encodeURIComponent(data.key)}&select=status`);
+            if (!keys || keys.length === 0 || keys[0].status !== 'active') {
                 localStorage.removeItem(STORAGE_KEY);
                 return { valid: false, reason: 'KEY ĐÃ BỊ VÔ HIỆU HÓA' };
             }
+            
             if (data.expiry === 'VV') return { valid: true, data: data };
             if (Date.now() > data.validUntil) {
                 localStorage.removeItem(STORAGE_KEY);
