@@ -1,15 +1,14 @@
-// auth.js - VTĐZAI - HỆ THỐNG KEY & SUPABASE
+// auth.js - VTĐZAI - PROJECT MỚI
 (function() {
-    // ===== CẤU HÌNH SUPABASE =====
-    const SUPABASE_URL = 'https://dgcnstiwchdqlgddcnca.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnY25zdGl3Y2hkcWxnZGRjbmNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTQ3MzYsImV4cCI6MjEwMTMzMDczNn0.oSFC9_A1bfZga1_cqX6e-V3iNm9AjA-5TuMs9rpCLqg';
-    // =================================
+    // ===== CẤU HÌNH SUPABASE (PROJECT MỚI) =====
+    const SUPABASE_URL = 'https://skvytgfkiqavchpchnnq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrdnl0Z2ZraXFhdmNocGNobm5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MDgwMTcsImV4cCI6MjEwMTM4NDAxN30.Z2KLheGcLZxiVXlKdwv6D_h-XVRp_RHGBzaDHqzS0wY';
+    // ============================================
 
     const STORAGE_KEY = 'vtd_auth_data';
 
     async function supabaseRequest(endpoint, method = 'GET', body = null) {
         const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
-        
         const headers = {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
@@ -17,17 +16,8 @@
             'Accept': 'application/json',
             'Prefer': 'return=representation'
         };
-
-        const options = {
-            method: method,
-            headers: headers,
-            mode: 'cors',
-            credentials: 'omit'
-        };
-
-        if (body) {
-            options.body = JSON.stringify(body);
-        }
+        const options = { method, headers, mode: 'cors', credentials: 'omit' };
+        if (body) options.body = JSON.stringify(body);
 
         try {
             const response = await fetch(url, options);
@@ -73,9 +63,7 @@
 
         try {
             // Kiểm tra key tồn tại
-            const keys = await supabaseRequest(
-                `keys?key_code=eq.${encodeURIComponent(keyCode)}&select=*`
-            );
+            const keys = await supabaseRequest(`keys?key_code=eq.${encodeURIComponent(keyCode)}&select=*`);
             if (!keys || keys.length === 0) {
                 return { success: false, message: 'KEY KHÔNG TỒN TẠI' };
             }
@@ -87,22 +75,18 @@
             const expiryType = keyData.expiry_type;
             const deviceLimit = keyData.device_limit;
 
-            // Kiểm tra giới hạn device cho key 7D
+            // Key 7D - kiểm tra số lượng device
             if (expiryType === '7D') {
-                const countResult = await supabaseRequest(
-                    `device_count?key_code=eq.${encodeURIComponent(keyCode)}&select=count`
-                );
+                const countResult = await supabaseRequest(`device_count?key_code=eq.${encodeURIComponent(keyCode)}&select=count`);
                 const currentCount = (countResult && countResult.length > 0) ? countResult[0].count : 0;
                 if (currentCount >= deviceLimit) {
                     return { success: false, message: 'KEY 7 NGÀY ĐÃ ĐẠT GIỚI HẠN 70 THIẾT BỊ' };
                 }
             }
 
-            // Kiểm tra key VV đã dùng trên device khác
+            // Key VV - kiểm tra device khác
             if (expiryType === 'VV') {
-                const existing = await supabaseRequest(
-                    `activations?key_code=eq.${encodeURIComponent(keyCode)}&select=device_id`
-                );
+                const existing = await supabaseRequest(`activations?key_code=eq.${encodeURIComponent(keyCode)}&select=device_id`);
                 if (existing && existing.length > 0) {
                     const usedDevice = existing[0].device_id;
                     if (usedDevice !== deviceId) {
@@ -112,22 +96,18 @@
             }
 
             // Kiểm tra device đã kích hoạt chưa
-            const existingAct = await supabaseRequest(
-                `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}&select=*`
-            );
+            const existingAct = await supabaseRequest(`activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}&select=*`);
+            const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
+                               expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
+                               null;
+
             if (existingAct && existingAct.length > 0) {
-                const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
-                                   expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
-                                   null;
                 await supabaseRequest(
                     `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}`,
                     'PATCH',
                     { valid_until: validUntil }
                 );
             } else {
-                const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
-                                   expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
-                                   null;
                 await supabaseRequest('activations', 'POST', {
                     key_code: keyCode,
                     device_id: deviceId,
@@ -161,16 +141,12 @@
                 localStorage.removeItem(STORAGE_KEY);
                 return { valid: false, reason: 'THIẾT BỊ KHÔNG KHỚP' };
             }
-            const keys = await supabaseRequest(
-                `keys?key_code=eq.${encodeURIComponent(data.key)}&select=is_active`
-            );
+            const keys = await supabaseRequest(`keys?key_code=eq.${encodeURIComponent(data.key)}&select=is_active`);
             if (!keys || keys.length === 0 || !keys[0].is_active) {
                 localStorage.removeItem(STORAGE_KEY);
                 return { valid: false, reason: 'KEY ĐÃ BỊ VÔ HIỆU HÓA' };
             }
-            if (data.expiry === 'VV') {
-                return { valid: true, data: data };
-            }
+            if (data.expiry === 'VV') return { valid: true, data: data };
             if (Date.now() > data.validUntil) {
                 localStorage.removeItem(STORAGE_KEY);
                 return { valid: false, reason: 'KEY ĐÃ HẾT HẠN' };
@@ -182,40 +158,26 @@
         }
     }
 
-    function checkActivation() {
-        return checkActivationRemote();
-    }
+    function checkActivation() { return checkActivationRemote(); }
 
     function getOffsetData() {
         return {
-            moveSpeedScale: '0x20',
-            XMoveRange: '0x24',
-            YMoveRange: '0x2c',
-            MAX_FOV: '0x34',
-            MIN_FOV: '0x38',
-            EventLogClickType: '0x40',
-            SoundId: '0x48',
-            EffectId: '0x50',
-            EffectObject: '0x58',
-            EffectShowTime: '0x60',
-            IsCoverDefaultSound: '0x64',
-            PhotoCamera: '0x68',
-            m_OrgFOV: '0x70',
-            m_IsPlayerInTrigger: '0x74',
-            SoundResId: '0x78',
-            m_ModelMatch: '0x80',
-            m_AsyncLoadTickets: '0x88',
-            BanTriggerMatchTime: '0x90',
-            m_IsTraingMode: '0x94',
+            moveSpeedScale: '0x20', XMoveRange: '0x24', YMoveRange: '0x2c',
+            MAX_FOV: '0x34', MIN_FOV: '0x38', EventLogClickType: '0x40',
+            SoundId: '0x48', EffectId: '0x50', EffectObject: '0x58',
+            EffectShowTime: '0x60', IsCoverDefaultSound: '0x64',
+            PhotoCamera: '0x68', m_OrgFOV: '0x70', m_IsPlayerInTrigger: '0x74',
+            SoundResId: '0x78', m_ModelMatch: '0x80', m_AsyncLoadTickets: '0x88',
+            BanTriggerMatchTime: '0x90', m_IsTraingMode: '0x94',
             m_IsInPhotogragphMode: '0x95'
         };
     }
 
     window.VTDZAI_AUTH = {
-        activateKeyWithSupabase: activateKeyWithSupabase,
-        checkActivation: checkActivation,
-        getDeviceId: getDeviceId,
-        getOffsetData: getOffsetData,
-        supabaseRequest: supabaseRequest
+        activateKeyWithSupabase,
+        checkActivation,
+        getDeviceId,
+        getOffsetData,
+        supabaseRequest
     };
 })();
