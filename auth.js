@@ -1,30 +1,47 @@
-// auth.js - VTĐZAI - BẢN NÂNG CẤP CHỊU LỖI
+// auth.js - VTĐZAI - HỆ THỐNG KEY & SUPABASE (dùng chung)
 (function() {
-    const SUPABASE_URL = 'https://yhxmbvxhnzgsqsyjvjks.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloeG1idnhobnpnc3FzeWp2amtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU0MjU2MDAsImV4cCI6MjAzMTAwMTYwMH0.6hJkLmN9qR2tX7wY4zA1bC3dE5fG8iK0oLpQ2sT4uV6';
+    // ===== CẤU HÌNH SUPABASE MỚI =====
+    const SUPABASE_URL = 'https://dgcnstiwchdqlgddcnca.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnY25zdGl3Y2hkcWxnZGRjbmNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU0MjU2MDAsImV4cCI6MjAzMTAwMTYwMH0.6hJkLmN9qR2tX7wY4zA1bC3dE5fG8iK0oLpQ2sT4uV6';
+    // =================================
 
     const STORAGE_KEY = 'vtd_auth_data';
 
     async function supabaseRequest(endpoint, method = 'GET', body = null) {
         const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+        
         const headers = {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Prefer': 'return=representation'
         };
-        const options = { method, headers };
-        if (body) options.body = JSON.stringify(body);
+
+        const options = {
+            method: method,
+            headers: headers,
+            mode: 'cors',
+            credentials: 'omit'
+        };
+
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
 
         try {
+            console.log('[VTĐZAI] Gọi Supabase:', url);
             const response = await fetch(url, options);
+            
             if (!response.ok) {
                 const text = await response.text();
-                throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+                throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
             }
+            
             return await response.json();
-        } catch (err) {
-            // Bắn lỗi chi tiết
-            throw new Error(`Không thể kết nối Supabase: ${err.message}. Kiểm tra CORS và URL.`);
+        } catch (error) {
+            console.error('[VTĐZAI] Lỗi fetch:', error);
+            throw new Error(`Không thể kết nối Supabase: ${error.message}. Kiểm tra CORS và URL.`);
         }
     }
 
@@ -59,6 +76,10 @@
         const keyCode = rawKey.trim().toUpperCase();
 
         try {
+            // Test kết nối
+            const test = await supabaseRequest('keys?limit=1&select=count');
+            console.log('[VTĐZAI] Kết nối Supabase thành công:', test);
+
             const keys = await supabaseRequest(
                 `keys?key_code=eq.${encodeURIComponent(keyCode)}&select=*`
             );
