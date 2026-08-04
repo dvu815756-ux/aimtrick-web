@@ -1,72 +1,113 @@
-/* app.js - Sửa phần check activation - FIXED */
-// ============================================================
-// CHECK ACTIVATION - FIXED
-// ============================================================
-function checkActivation() {
-    if (!window.AIMTRICK) {
-        setStatus('Lỗi: Không tìm thấy hệ thống xác thực', 'error');
-        return false;
-    }
-
-    // Gọi isActivated() để refresh state
-    const activated = window.AIMTRICK.isActivated();
-    
-    if (!activated) {
-        setStatus('Chưa kích hoạt bản quyền.', 'error');
-        // CHỈ CHUYỂN KHI CHƯA Ở INDEX.HTML
-        if (!window.location.pathname.includes('index.html')) {
-            setTimeout(function() {
-                window.location.replace('index.html');
-            }, 1500);
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VTĐZAI - CAMERA OFFSET</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #0a0a0a;
+            color: #00eaff;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            box-sizing: border-box;
         }
-        return false;
-    }
-
-    // Hiển thị thông tin key
-    const info = window.AIMTRICK.getKeyInfo();
-    if (info && info.type && DOM.cpuInfo) {
-        DOM.cpuInfo.textContent = info.type;
-    }
-    if (DOM.statusInfo) {
-        DOM.statusInfo.textContent = 'Đã kích hoạt';
-        DOM.statusInfo.className = 'value green';
-    }
-    return true;
-}
-
-// ============================================================
-// INIT - FIXED
-// ============================================================
-function init() {
-    if (!DOM.container) {
-        console.error('AIMTRICK: Container not found');
-        return;
-    }
-
-    // Kiểm tra kích hoạt
-    const activated = checkActivation();
-    if (!activated) {
-        if (DOM.optimizeBtn) DOM.optimizeBtn.disabled = true;
-        // Nếu đã ở index.html thì không redirect nữa
-        if (window.location.pathname.includes('index.html')) {
-            setStatus('Vui lòng kích hoạt tại trang chủ', 'warning');
+        #offset-panel {
+            background: #111;
+            border: 1px solid #00aaff44;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
-        return;
-    }
-
-    // Hiển thị thông tin thiết bị
-    const info = getDeviceInfo();
-    if (DOM.cpuInfo) DOM.cpuInfo.textContent = info.cores + ' nhân';
-    if (DOM.ramInfo) DOM.ramInfo.textContent = info.ram + ' GB';
-    if (DOM.statusInfo) {
-        DOM.statusInfo.textContent = 'Sẵn sàng';
-        DOM.statusInfo.className = 'value blue';
-    }
-    setStatus('Sẵn sàng tối ưu', 'info');
-
-    if (DOM.optimizeBtn) {
-        DOM.optimizeBtn.addEventListener('click', performOptimization);
-    }
-
-    console.log('[AIMTRICK] App ready');
-}
+        #offset-panel h2 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            color: #44ffaa;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #00aaff33;
+            padding-bottom: 6px;
+        }
+        #offset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 4px 12px;
+            font-size: 13px;
+        }
+        .offset-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 4px;
+            border-bottom: 1px solid #00aaff11;
+        }
+        .offset-name { color: #88ddff; }
+        .offset-value { color: #ffaa44; font-weight: bold; }
+        #webclip-frame {
+            flex: 1;
+            min-height: 300px;
+            border: 1px solid #00aaff44;
+            border-radius: 8px;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+        }
+        #webclip-frame canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        #status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: #111;
+            border-top: 1px solid #00aaff33;
+            font-size: 12px;
+            color: #88aacc;
+            flex-shrink: 0;
+            margin-top: 6px;
+            border-radius: 4px;
+        }
+        .btn-logout {
+            background: none;
+            border: 1px solid #ff444466;
+            color: #ff6666;
+            padding: 2px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+        }
+        .btn-logout:hover { background: #ff444422; }
+        @media (max-width: 600px) {
+            #offset-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="offset-panel">
+            <h2>⚙ OFFSET CAMERA (LevelPhotograph)</h2>
+            <div id="offset-grid"></div>
+        </div>
+        <div id="webclip-frame">
+            <canvas id="offsetCanvas"></canvas>
+        </div>
+        <div id="status-bar">
+            <span id="auth-status">🔐 ĐÃ KÍCH HOẠT</span>
+            <span id="device-info">DEV: ...</span>
+            <button class="btn-logout" id="logoutBtn">THOÁT</button>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
