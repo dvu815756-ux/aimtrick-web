@@ -1,6 +1,7 @@
-// auth.js - VTĐZAI - HỆ THỐNG KEY & SUPABASE (dùng chung)
+// auth.js - VTĐZAI - HỆ THỐNG KEY & SUPABASE
 (function() {
-    // ===== CẤU HÌNH SUPABASE MỚI =====
+    // ===== CẤU HÌNH SUPABASE =====
+    // THAY THẾ BẰNG URL VÀ ANON KEY CỦA BẠN
     const SUPABASE_URL = 'https://dgcnstiwchdqlgddcnca.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnY25zdGl3Y2hkcWxnZGRjbmNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU0MjU2MDAsImV4cCI6MjAzMTAwMTYwMH0.6hJkLmN9qR2tX7wY4zA1bC3dE5fG8iK0oLpQ2sT4uV6';
     // =================================
@@ -30,18 +31,14 @@
         }
 
         try {
-            console.log('[VTĐZAI] Gọi Supabase:', url);
             const response = await fetch(url, options);
-            
             if (!response.ok) {
                 const text = await response.text();
                 throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
             }
-            
             return await response.json();
         } catch (error) {
-            console.error('[VTĐZAI] Lỗi fetch:', error);
-            throw new Error(`Không thể kết nối Supabase: ${error.message}. Kiểm tra CORS và URL.`);
+            throw new Error(`Không thể kết nối Supabase: ${error.message}`);
         }
     }
 
@@ -76,10 +73,7 @@
         const keyCode = rawKey.trim().toUpperCase();
 
         try {
-            // Test kết nối
-            const test = await supabaseRequest('keys?limit=1&select=count');
-            console.log('[VTĐZAI] Kết nối Supabase thành công:', test);
-
+            // Kiểm tra key tồn tại
             const keys = await supabaseRequest(
                 `keys?key_code=eq.${encodeURIComponent(keyCode)}&select=*`
             );
@@ -94,6 +88,7 @@
             const expiryType = keyData.expiry_type;
             const deviceLimit = keyData.device_limit;
 
+            // Kiểm tra giới hạn device cho key 7D
             if (expiryType === '7D') {
                 const countResult = await supabaseRequest(
                     `device_count?key_code=eq.${encodeURIComponent(keyCode)}&select=count`
@@ -104,6 +99,7 @@
                 }
             }
 
+            // Kiểm tra key VV đã dùng trên device khác
             if (expiryType === 'VV') {
                 const existing = await supabaseRequest(
                     `activations?key_code=eq.${encodeURIComponent(keyCode)}&select=device_id`
@@ -116,6 +112,7 @@
                 }
             }
 
+            // Kiểm tra device đã kích hoạt chưa
             const existingAct = await supabaseRequest(
                 `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}&select=*`
             );
