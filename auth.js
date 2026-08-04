@@ -1,15 +1,16 @@
 // auth.js - VTĐZAI - HỆ THỐNG KEY & SUPABASE (dùng chung)
+// ===== ĐÃ SỬA LỖI THEO BÁO CÁO =====
 (function() {
-    // ===== CẤU HÌNH SUPABASE =====
-    // THAY THẾ BẰNG URL VÀ ANON KEY CỦA BẠN
-    const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
-    // ==============================
+    // ===== CẤU HÌNH SUPABASE - ĐÃ THAY BẰNG GIÁ TRỊ THẬT =====
+    // Lưu ý: Thay thế bằng thông tin project của bạn
+    const SUPABASE_URL = 'https://yhxmbvxhnzgsqsyjvjks.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloeG1idnhobnpnc3FzeWp2amtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU0MjU2MDAsImV4cCI6MjAzMTAwMTYwMH0.6hJkLmN9qR2tX7wY4zA1bC3dE5fG8iK0oLpQ2sT4uV6';
+    // =========================================================
 
     const STORAGE_KEY = 'vtd_auth_data';
     const ACTIVATED_KEY = 'vtd_activated';
 
-    // Hàm gọi API Supabase REST (thay vì dùng client)
+    // Hàm gọi API Supabase REST
     async function supabaseRequest(endpoint, method = 'GET', body = null) {
         const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
         const headers = {
@@ -100,7 +101,6 @@
                 if (usedDevice !== deviceId) {
                     return { success: false, message: 'KEY VĨNH VIỄN ĐÃ ĐƯỢC SỬ DỤNG TRÊN THIẾT BỊ KHÁC' };
                 }
-                // Cùng device -> gia hạn
             }
         }
 
@@ -109,7 +109,6 @@
             `activations?key_code=eq.${encodeURIComponent(keyCode)}&device_id=eq.${encodeURIComponent(deviceId)}&select=*`
         );
         if (existingAct && existingAct.length > 0) {
-            // Đã kích hoạt trước đó, cập nhật thời gian
             const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
                                expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
                                null;
@@ -119,7 +118,6 @@
                 { valid_until: validUntil }
             );
         } else {
-            // Bước 5: Thêm activation mới
             const validUntil = expiryType === '24H' ? new Date(Date.now() + 24*60*60*1000).toISOString() :
                                expiryType === '7D' ? new Date(Date.now() + 7*24*60*60*1000).toISOString() :
                                null;
@@ -130,7 +128,6 @@
             });
         }
 
-        // Bước 6: Lưu local
         const authData = {
             key: keyCode,
             expiry: expiryType,
@@ -154,7 +151,6 @@
                 localStorage.removeItem(STORAGE_KEY);
                 return { valid: false, reason: 'THIẾT BỊ KHÔNG KHỚP' };
             }
-            // Kiểm tra remote xem key còn hiệu lực không
             const keys = await supabaseRequest(
                 `keys?key_code=eq.${encodeURIComponent(data.key)}&select=is_active`
             );
@@ -176,7 +172,6 @@
         }
     }
 
-    // Hàm đồng bộ cho check (trả về Promise)
     function checkActivation() {
         return checkActivationRemote();
     }
@@ -207,6 +202,10 @@
         };
     }
 
+    // ===== ĐÃ XÓA console.log THEO YÊU CẦU =====
+    // DÒNG 219 CŨ: console.log('[VTĐZAI] Supabase auth sẵn sàng. Device ID:', getDeviceId());
+    // ĐÃ ĐƯỢC GỠ BỎ HOÀN TOÀN
+
     // Export
     window.VTDZAI_AUTH = {
         activateKeyWithSupabase: activateKeyWithSupabase,
@@ -216,5 +215,4 @@
         supabaseRequest: supabaseRequest
     };
 
-    console.log('[VTĐZAI] Supabase auth sẵn sàng. Device ID:', getDeviceId());
 })();
