@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- SERVICE WORKER ĐĂNG KÝ -->
+    <script>
+        // Đăng ký Service Worker để xử lý CORS
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(function(reg) {
+                    console.log('[VTĐZAI] Service Worker đã đăng ký thành công');
+                })
+                .catch(function(err) {
+                    console.log('[VTĐZAI] Service Worker đăng ký thất bại:', err);
+                });
+        }
+    </script>
+
     <div id="key-container">
         <div class="logo-box">
             <pre>
